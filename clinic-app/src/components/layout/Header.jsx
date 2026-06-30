@@ -15,7 +15,10 @@ export default function Header({ navOpen, onToggleNav }) {
           onClick={onToggleNav}
           aria-label="Toggle menu"
         >
-          <motion.div animate={{ rotate: navOpen ? 90 : 0 }} transition={{ duration: 0.2 }}>
+          <motion.div
+            animate={{ rotate: navOpen ? 90 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
             {navOpen ? <X size={20} /> : <Menu size={20} />}
           </motion.div>
         </button>
@@ -24,13 +27,19 @@ export default function Header({ navOpen, onToggleNav }) {
             <Stethoscope size={16} color="#fff" strokeWidth={1.75} />
           </div>
           <div>
-            <p className="leading-none text-sm sm:text-base font-semibold tracking-tight">Arogya</p>
-            <p className="text-[10px] leading-none mt-0.5 text-ink-soft font-medium hidden xs:block">Family Clinic, Chennai</p>
+            <p className="leading-none text-sm sm:text-base font-semibold tracking-tight">
+              Clinic
+            </p>
+            <p className="text-[10px] leading-none mt-0.5 text-ink-soft font-medium hidden xs:block">
+              Family Clinic, Chennai
+            </p>
           </div>
         </div>
       </div>
       <div className="flex items-center gap-2 sm:gap-2.5">
-        <span className="hidden xs:inline text-xs font-medium text-ink-soft">Demo Patient</span>
+        <span className="hidden xs:inline text-xs font-medium text-ink-soft">
+          Demo Patient
+        </span>
         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-semibold bg-accent text-[#2A1B05] cursor-pointer shrink-0">
           DP
         </div>
