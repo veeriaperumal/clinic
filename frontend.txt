@@ -1,0 +1,237 @@
+{
+"$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+"notGrouped": "bottom",
+"groupings": [
+{
+"title": "Product Planning",
+"description": "Planning frontend projects before development.",
+"skills": [
+"requirements-analysis",
+"feature-breakdown",
+"user-stories",
+"user-flows",
+"information-architecture",
+"wireframing",
+"technical-planning"
+]
+},
+{
+"title": "Frontend Fundamentals",
+"description": "Core web technologies.",
+"skills": [
+"html5",
+"css3",
+"javascript",
+"typescript",
+"dom",
+"browser-rendering",
+"web-standards"
+]
+},
+{
+"title": "Frontend Architecture",
+"description": "Scalable frontend architecture.",
+"skills": [
+"feature-first-architecture",
+"clean-architecture",
+"component-driven-development",
+"folder-structure-design",
+"dependency-management",
+"frontend-design-patterns",
+"monorepo-architecture"
+]
+},
+{
+"title": "React Fundamentals",
+"description": "Core React concepts.",
+"skills": [
+"react-components",
+"react-hooks",
+"react-context",
+"react-lifecycle",
+"react-performance",
+"react-composition",
+"custom-hooks"
+]
+},
+{
+"title": "Next.js",
+"description": "Modern production web applications.",
+"skills": [
+"app-router",
+"server-components",
+"client-components",
+"server-actions",
+"middleware",
+"route-handlers",
+"next-auth"
+]
+},
+{
+"title": "State Management",
+"description": "Managing application state.",
+"skills": [
+"zustand",
+"redux-toolkit",
+"context-api",
+"tanstack-query",
+"server-state-management",
+"cache-management",
+"optimistic-updates"
+]
+},
+{
+"title": "UI Engineering",
+"description": "Building scalable interfaces.",
+"skills": [
+"responsive-design",
+"adaptive-design",
+"design-systems",
+"component-library",
+"theme-system",
+"dark-mode",
+"accessibility",
+"design-tokens"
+]
+},
+{
+"title": "Styling",
+"description": "Frontend styling technologies.",
+"skills": [
+"tailwindcss",
+"css-modules",
+"styled-components",
+"shadcn-ui",
+"material-ui",
+"css-architecture",
+"responsive-layouts"
+]
+},
+{
+"title": "Animations",
+"description": "Modern motion design.",
+"skills": [
+"framer-motion",
+"page-transitions",
+"scroll-animations",
+"micro-interactions",
+"loading-animations",
+"gesture-animations",
+"motion-design"
+]
+},
+{
+"title": "API Integration",
+"description": "Connecting frontend to backend systems.",
+"skills": [
+"rest-api-consumption",
+"graphql-client",
+"axios",
+"fetch-api",
+"authentication-flows",
+"token-management",
+"error-handling"
+]
+},
+{
+"title": "Authentication & Security",
+"description": "Frontend security practices.",
+"skills": [
+"jwt-authentication",
+"oauth",
+"session-management",
+"csrf-protection",
+"xss-prevention",
+"secure-storage",
+"frontend-security"
+]
+},
+{
+"title": "Performance Optimization",
+"description": "Fast and scalable applications.",
+"skills": [
+"lazy-loading",
+"code-splitting",
+"bundle-optimization",
+"image-optimization",
+"render-optimization",
+"caching-strategies",
+"core-web-vitals"
+]
+},
+{
+"title": "SEO",
+"description": "Search engine optimization.",
+"skills": [
+"technical-seo",
+"metadata-management",
+"structured-data",
+"sitemaps",
+"robots-txt",
+"open-graph-tags"
+]
+},
+{
+"title": "Testing",
+"description": "Frontend quality assurance.",
+"skills": [
+"unit-testing",
+"component-testing",
+"integration-testing",
+"e2e-testing",
+"jest",
+"vitest",
+"playwright",
+"cypress"
+]
+},
+{
+"title": "Observability",
+"description": "Monitoring production applications.",
+"skills": [
+"sentry",
+"error-tracking",
+"session-replay",
+"frontend-logging",
+"analytics",
+"performance-monitoring"
+]
+},
+{
+"title": "CI/CD",
+"description": "Automated delivery pipelines.",
+"skills": [
+"github-actions",
+"preview-deployments",
+"build-pipelines",
+"release-management",
+"rollback-strategies",
+"deployment-automation"
+]
+},
+{
+"title": "Deployment",
+"description": "Production deployment platforms.",
+"skills": [
+"vercel-deployment",
+"netlify-deployment",
+"cloudflare-pages",
+"cdn-configuration",
+"dns-management",
+"ssl-certificates"
+]
+},
+{
+"title": "Production Engineering",
+"description": "Operating frontend applications in production.",
+"skills": [
+"feature-flags",
+"ab-testing",
+"analytics-events",
+"release-strategies",
+"incident-management",
+"frontend-observability"
+]
+}
+]
+}

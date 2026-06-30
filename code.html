@@ -1,0 +1,987 @@
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Calendar, FlaskConical, Video, FileText, Pill, Menu, X, Check,
+  Clock, MapPin, Star, Search, ChevronRight, ChevronLeft, Send,
+  Download, AlertCircle, CheckCircle2, Circle, User, Home as HomeIcon,
+  Stethoscope, ArrowRight, MessageCircle
+} from "lucide-react";
+
+/* ---------------------------------- DATA ---------------------------------- */
+
+const DEPARTMENTS = [
+  { id: "gen", name: "General Medicine", short: "GEN" },
+  { id: "ent", name: "ENT", short: "ENT" },
+  { id: "dia", name: "Diabetes Care", short: "DIA" },
+  { id: "ped", name: "Paediatrics", short: "PED" },
+  { id: "gyn", name: "Gynaecology", short: "GYN" },
+];
+
+const DOCTORS = [
+  { id: "d1", name: "Dr. Meera Krishnan", dept: "gen", deptName: "General Medicine", qual: "MBBS, MD", fee: 300, rating: 4.9, next: "Today, 4:40 PM", online: true, initials: "MK" },
+  { id: "d2", name: "Dr. Arjun Suresh", dept: "ent", deptName: "ENT Specialist", qual: "MBBS, MS (ENT)", fee: 450, rating: 4.8, next: "Tomorrow, 11:00 AM", online: false, initials: "AS" },
+  { id: "d3", name: "Dr. Lakshmi Iyer", dept: "dia", deptName: "Diabetologist", qual: "MBBS, DM", fee: 500, rating: 5.0, next: "Today, 6:10 PM", online: true, initials: "LI" },
+  { id: "d4", name: "Dr. Karthik Rajan", dept: "ped", deptName: "Paediatrician", qual: "MBBS, MD (Paeds)", fee: 350, rating: 4.9, next: "Today, 5:20 PM", online: true, initials: "KR" },
+  { id: "d5", name: "Dr. Priya Bhaskaran", dept: "gyn", deptName: "Gynaecologist", qual: "MBBS, DGO", fee: 500, rating: 4.7, next: "Tomorrow, 10:30 AM", online: false, initials: "PB" },
+];
+
+const MORNING_SLOTS = ["9:00 AM", "9:20 AM", "9:40 AM", "10:00 AM", "10:20 AM", "11:00 AM"];
+const EVENING_SLOTS = ["5:00 PM", "5:20 PM", "5:40 PM", "6:00 PM", "6:20 PM", "7:00 PM"];
+
+const LAB_TESTS = [
+  { id: "t1", name: "Complete Blood Count (CBC)", code: "CBC-01", price: 350, fasting: false },
+  { id: "t2", name: "Fasting Blood Sugar", code: "FBS-02", price: 150, fasting: true },
+  { id: "t3", name: "Lipid Profile", code: "LIP-03", price: 600, fasting: true },
+  { id: "t4", name: "Thyroid Profile (T3, T4, TSH)", code: "THY-04", price: 500, fasting: false },
+  { id: "t5", name: "HbA1c", code: "HBA-05", price: 450, fasting: false },
+  { id: "t6", name: "Liver Function Test", code: "LFT-06", price: 550, fasting: true },
+  { id: "t7", name: "Urine Routine", code: "URN-07", price: 200, fasting: false },
+  { id: "t8", name: "Vitamin D, 25-OH", code: "VTD-08", price: 900, fasting: false },
+];
+
+const MEDICINES = [
+  { id: "m1", name: "Paracetamol 650mg", form: "Tablet · 10s strip", price: 25, stock: "in" },
+  { id: "m2", name: "Azithromycin 500mg", form: "Tablet · 3s strip", price: 85, stock: "low" },
+  { id: "m3", name: "Metformin 500mg", form: "Tablet · 15s strip", price: 40, stock: "in" },
+  { id: "m4", name: "Amoxicillin 500mg", form: "Capsule · 10s strip", price: 60, stock: "out", sub: "Amoxiclav 625mg" },
+  { id: "m5", name: "Cetirizine 10mg", form: "Tablet · 10s strip", price: 18, stock: "in" },
+  { id: "m6", name: "Pantoprazole 40mg", form: "Tablet · 15s strip", price: 95, stock: "in" },
+  { id: "m7", name: "Atorvastatin 10mg", form: "Tablet · 10s strip", price: 70, stock: "low" },
+  { id: "m8", name: "Insulin Glargine 100IU/mL", form: "Injection pen · 3mL", price: 650, stock: "out", sub: "Insulin Lispro pen" },
+];
+
+const REPORTS = [
+  {
+    id: "r1", test: "Complete Blood Count", date: "26 Jun 2026", status: "ready",
+    params: [
+      { name: "Haemoglobin", result: "10.8", unit: "g/dL", range: "12.0–15.5", flag: "low" },
+      { name: "WBC Count", result: "7,200", unit: "/µL", range: "4,000–11,000", flag: "normal" },
+      { name: "Platelet Count", result: "2.4", unit: "lakh/µL", range: "1.5–4.1", flag: "normal" },
+      { name: "RBC Count", result: "4.6", unit: "mill/µL", range: "4.2–5.4", flag: "normal" },
+    ],
+  },
+  {
+    id: "r2", test: "Thyroid Profile", date: "18 Jun 2026", status: "ready",
+    params: [
+      { name: "TSH", result: "2.4", unit: "µIU/mL", range: "0.4–4.0", flag: "normal" },
+      { name: "T3", result: "1.1", unit: "ng/mL", range: "0.8–2.0", flag: "normal" },
+      { name: "T4", result: "8.2", unit: "µg/dL", range: "5.0–12.0", flag: "normal" },
+    ],
+  },
+  { id: "r3", test: "Lipid Profile", date: "29 Jun 2026", status: "processing", params: [] },
+  { id: "r4", test: "HbA1c", date: "30 Jun 2026", status: "awaiting", params: [] },
+];
+
+const NAV = [
+  { id: "home", label: "Overview", icon: HomeIcon },
+  { id: "appointment", label: "Book Appointment", icon: Calendar },
+  { id: "lab", label: "Lab Tests", icon: FlaskConical },
+  { id: "consult", label: "Consult Online", icon: Video },
+  { id: "reports", label: "My Reports", icon: FileText },
+  { id: "medicine", label: "Medicine Check", icon: Pill },
+];
+
+const TOKEN_KEYS = ["GEN", "ENT", "DIA", "PED", "GYN"];
+
+/* ------------------------------- HELPERS ------------------------------- */
+
+function nextDays(n) {
+  const days = [];
+  const base = new Date();
+  for (let i = 0; i < n; i++) {
+    const d = new Date(base);
+    d.setDate(base.getDate() + i);
+    days.push({
+      label: i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-IN", { weekday: "short" }),
+      date: d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }),
+      key: d.toISOString().slice(0, 10),
+    });
+  }
+  return days;
+}
+
+function StatusPill({ status }) {
+  const map = {
+    ready: { bg: "#E8F2EA", fg: "#2F6B45", label: "Ready" },
+    processing: { bg: "#FCEFE0", fg: "#A2611A", label: "Processing" },
+    awaiting: { bg: "#F1EEEA", fg: "#6B645B", label: "Awaiting sample" },
+  };
+  const s = map[status];
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+      style={{ background: s.bg, color: s.fg, fontFamily: "var(--font-mono)" }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.fg }} />
+      {s.label}
+    </span>
+  );
+}
+
+function FlagBadge({ flag }) {
+  if (flag === "normal") return <span style={{ color: "#2F6B45" }} className="text-xs font-semibold">Normal</span>;
+  if (flag === "low") return <span style={{ color: "#B8503F" }} className="text-xs font-semibold">Low</span>;
+  return <span style={{ color: "#B8503F" }} className="text-xs font-semibold">High</span>;
+}
+
+function StockBadge({ stock }) {
+  const map = {
+    in: { bg: "#E8F2EA", fg: "#2F6B45", label: "In stock" },
+    low: { bg: "#FCEFE0", fg: "#A2611A", label: "Low stock" },
+    out: { bg: "#F7E9E7", fg: "#B8503F", label: "Out of stock" },
+  };
+  const s = map[stock];
+  return (
+    <span className="inline-block px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: s.bg, color: s.fg }}>
+      {s.label}
+    </span>
+  );
+}
+
+function SectionHeading({ eyebrow, title, sub }) {
+  return (
+    <div className="mb-7">
+      {eyebrow && (
+        <p className="text-xs font-semibold tracking-widest uppercase mb-2" style={{ color: "var(--accent-dark)", fontFamily: "var(--font-mono)" }}>
+          {eyebrow}
+        </p>
+      )}
+      <h2 className="text-2xl md:text-3xl mb-1.5" style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--ink)" }}>
+        {title}
+      </h2>
+      {sub && <p className="text-sm" style={{ color: "var(--ink-soft)" }}>{sub}</p>}
+    </div>
+  );
+}
+
+/* ------------------------------ TOKEN BOARD ------------------------------ */
+
+function TokenBoard() {
+  const [tokens, setTokens] = useState({ GEN: 18, ENT: 6, DIA: 11, PED: 24, GYN: 4 });
+  const reduceMotion = useRef(false);
+
+  useEffect(() => {
+    reduceMotion.current = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion.current) return;
+    const id = setInterval(() => {
+      setTokens((prev) => {
+        const key = TOKEN_KEYS[Math.floor(Math.random() * TOKEN_KEYS.length)];
+        return { ...prev, [key]: prev[key] + 1 };
+      });
+    }, 4500);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div
+      className="w-full px-5 md:px-10 py-3 flex items-center gap-6 overflow-x-auto"
+      style={{ background: "var(--ink)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+    >
+      <span className="text-xs uppercase tracking-widest shrink-0" style={{ color: "rgba(255,255,255,0.45)", fontFamily: "var(--font-mono)" }}>
+        Now serving
+      </span>
+      <div className="flex items-center gap-6 shrink-0">
+        {TOKEN_KEYS.map((k) => (
+          <div key={k} className="flex items-baseline gap-2">
+            <span className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.55)", fontFamily: "var(--font-mono)" }}>
+              {k}
+            </span>
+            <span className="text-lg font-semibold tabular-nums" style={{ color: "var(--accent)", fontFamily: "var(--font-mono)" }}>
+              {String(tokens[k]).padStart(2, "0")}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* --------------------------------- HOME --------------------------------- */
+
+function Home({ go }) {
+  const cards = [
+    { id: "appointment", title: "Book an appointment", desc: "Pick a department, choose a doctor and a slot — get a token instantly.", icon: Calendar },
+    { id: "lab", title: "Book a lab test", desc: "Add tests to your order, choose home collection or walk-in.", icon: FlaskConical },
+    { id: "consult", title: "Consult online", desc: "Message a doctor who's online right now, no waiting room needed.", icon: Video },
+    { id: "reports", title: "View your reports", desc: "Read results with reference ranges as soon as they're ready.", icon: FileText },
+    { id: "medicine", title: "Check medicine stock", desc: "Search the in-house pharmacy before you make the trip.", icon: Pill },
+  ];
+
+  return (
+    <div>
+      <SectionHeading
+        eyebrow="Welcome back, Demo Patient"
+        title="What would you like to do today?"
+        sub="Your last visit was on 12 Jun 2026 with Dr. Meera Krishnan, General Medicine."
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+        {cards.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => go(c.id)}
+            className="text-left p-5 rounded-2xl transition-all hover:-translate-y-0.5"
+            style={{ background: "var(--surface)", border: "1px solid var(--line)" }}
+          >
+            <c.icon size={20} style={{ color: "var(--primary)" }} strokeWidth={1.75} />
+            <h3 className="mt-4 mb-1.5 text-base font-semibold" style={{ fontFamily: "var(--font-display)", color: "var(--ink)" }}>
+              {c.title}
+            </h3>
+            <p className="text-sm leading-relaxed" style={{ color: "var(--ink-soft)" }}>{c.desc}</p>
+            <span className="inline-flex items-center gap-1 mt-3 text-sm font-medium" style={{ color: "var(--primary)" }}>
+              Open <ArrowRight size={14} />
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-5 rounded-2xl" style={{ background: "var(--primary)", color: "#fff" }}>
+          <p className="text-xs uppercase tracking-widest opacity-70" style={{ fontFamily: "var(--font-mono)" }}>Upcoming</p>
+          <p className="mt-2 text-lg font-semibold" style={{ fontFamily: "var(--font-display)" }}>No appointment booked yet</p>
+          <p className="text-sm opacity-80 mt-1">Book one to see it here.</p>
+        </div>
+        <div className="p-5 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
+          <p className="text-xs uppercase tracking-widest" style={{ color: "var(--ink-soft)", fontFamily: "var(--font-mono)" }}>Pending report</p>
+          <p className="mt-2 text-lg font-semibold" style={{ fontFamily: "var(--font-display)" }}>Lipid Profile</p>
+          <p className="text-sm mt-1" style={{ color: "var(--ink-soft)" }}>Expected by tomorrow, 9 AM</p>
+        </div>
+        <div className="p-5 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
+          <p className="text-xs uppercase tracking-widest" style={{ color: "var(--ink-soft)", fontFamily: "var(--font-mono)" }}>Refill due</p>
+          <p className="mt-2 text-lg font-semibold" style={{ fontFamily: "var(--font-display)" }}>Metformin 500mg</p>
+          <p className="text-sm mt-1" style={{ color: "var(--ink-soft)" }}>4 days of stock remaining</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------- APPOINTMENT ----------------------------- */
+
+function Appointment() {
+  const [step, setStep] = useState(1);
+  const [dept, setDept] = useState(null);
+  const [doctor, setDoctor] = useState(null);
+  const [day, setDay] = useState(null);
+  const [slot, setSlot] = useState(null);
+  const [confirmed, setConfirmed] = useState(null);
+
+  const days = nextDays(6);
+  const filteredDoctors = dept ? DOCTORS.filter((d) => d.dept === dept) : DOCTORS;
+
+  function reset() {
+    setStep(1); setDept(null); setDoctor(null); setDay(null); setSlot(null); setConfirmed(null);
+  }
+
+  function confirmBooking() {
+    const deptInfo = DEPARTMENTS.find((d) => d.id === doctor.dept);
+    const token = Math.floor(Math.random() * 20) + 25;
+    setConfirmed({ token, deptInfo });
+  }
+
+  if (confirmed) {
+    return (
+      <div className="max-w-lg">
+        <div className="p-7 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
+          <div className="flex items-center gap-2 mb-5" style={{ color: "#2F6B45" }}>
+            <CheckCircle2 size={20} />
+            <span className="text-sm font-semibold">Appointment confirmed</span>
+          </div>
+          <div className="flex items-end justify-between pb-5 mb-5" style={{ borderBottom: "1px dashed var(--line)" }}>
+            <div>
+              <p className="text-xs uppercase tracking-widest" style={{ color: "var(--ink-soft)", fontFamily: "var(--font-mono)" }}>Your token</p>
+              <p className="text-5xl font-semibold mt-1" style={{ fontFamily: "var(--font-mono)", color: "var(--primary)" }}>
+                {confirmed.deptInfo.short}-{confirmed.token}
+              </p>
+            </div>
+            <Stethoscope size={36} strokeWidth={1.25} style={{ color: "var(--accent)" }} />
+          </div>
+          <dl className="space-y-3 text-sm">
+            <div className="flex justify-between"><dt style={{ color: "var(--ink-soft)" }}>Doctor</dt><dd className="font-medium">{doctor.name}</dd></div>
+            <div className="flex justify-between"><dt style={{ color: "var(--ink-soft)" }}>Department</dt><dd className="font-medium">{doctor.deptName}</dd></div>
+            <div className="flex justify-between"><dt style={{ color: "var(--ink-soft)" }}>Date</dt><dd className="font-medium">{day.label}, {day.date}</dd></div>
+            <div className="flex justify-between"><dt style={{ color: "var(--ink-soft)" }}>Time</dt><dd className="font-medium">{slot}</dd></div>
+            <div className="flex justify-between"><dt style={{ color: "var(--ink-soft)" }}>Consultation fee</dt><dd className="font-medium">₹{doctor.fee}</dd></div>
+          </dl>
+          <p className="text-xs mt-6" style={{ color: "var(--ink-soft)" }}>
+            Arrive 10 minutes early. Your token will appear on the token board near your turn.
+          </p>
+          <button onClick={reset} className="mt-6 w-full py-2.5 rounded-xl text-sm font-semibold" style={{ background: "var(--primary)", color: "#fff" }}>
+            Book another appointment
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <SectionHeading eyebrow="Step 1–4" title="Book an appointment" sub="Choose a department, a doctor, then a slot." />
+
+      {/* Stepper */}
+      <div className="flex items-center gap-2 mb-8 text-xs font-medium" style={{ fontFamily: "var(--font-mono)" }}>
+        {["Department", "Doctor", "Slot", "Confirm"].map((label, i) => (
+          <React.Fragment key={label}>
+            <span
+              className="px-3 py-1.5 rounded-full"
+              style={{
+                background: step === i + 1 ? "var(--primary)" : "transparent",
+                color: step === i + 1 ? "#fff" : "var(--ink-soft)",
+                border: step === i + 1 ? "none" : "1px solid var(--line)",
+              }}
+            >
+              {i + 1}. {label}
+            </span>
+            {i < 3 && <ChevronRight size={14} style={{ color: "var(--line)" }} />}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {step === 1 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {DEPARTMENTS.map((d) => (
+            <button
+              key={d.id}
+              onClick={() => { setDept(d.id); setStep(2); }}
+              className="p-5 rounded-2xl text-left"
+              style={{ background: "var(--surface)", border: "1px solid var(--line)" }}
+            >
+              <span className="text-xs font-semibold" style={{ color: "var(--accent-dark)", fontFamily: "var(--font-mono)" }}>{d.short}</span>
+              <p className="mt-2 font-semibold" style={{ fontFamily: "var(--font-display)" }}>{d.name}</p>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="space-y-3">
+          {filteredDoctors.map((doc) => (
+            <button
+              key={doc.id}
+              onClick={() => { setDoctor(doc); setStep(3); }}
+              className="w-full flex items-center gap-4 p-4 rounded-2xl text-left"
+              style={{ background: "var(--surface)", border: "1px solid var(--line)" }}
+            >
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-sm font-semibold"
+                style={{ background: "var(--primary-tint)", color: "var(--primary)" }}
+              >
+                {doc.initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold" style={{ fontFamily: "var(--font-display)" }}>{doc.name}</p>
+                <p className="text-sm" style={{ color: "var(--ink-soft)" }}>{doc.deptName} · {doc.qual}</p>
+                <div className="flex items-center gap-3 mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>
+                  <span className="flex items-center gap-1"><Star size={12} fill="var(--accent)" stroke="none" />{doc.rating}</span>
+                  <span>₹{doc.fee} fee</span>
+                  <span>Next: {doc.next}</span>
+                </div>
+              </div>
+              <ChevronRight size={18} style={{ color: "var(--ink-soft)" }} />
+            </button>
+          ))}
+          <button onClick={() => setStep(1)} className="text-sm font-medium flex items-center gap-1" style={{ color: "var(--primary)" }}>
+            <ChevronLeft size={14} /> Back to departments
+          </button>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div>
+          <p className="text-sm font-semibold mb-3">Choose a date</p>
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-6">
+            {days.map((d) => (
+              <button
+                key={d.key}
+                onClick={() => setDay(d)}
+                className="shrink-0 px-4 py-2.5 rounded-xl text-sm text-center"
+                style={{
+                  background: day?.key === d.key ? "var(--primary)" : "var(--surface)",
+                  color: day?.key === d.key ? "#fff" : "var(--ink)",
+                  border: "1px solid var(--line)",
+                }}
+              >
+                <div className="font-medium">{d.label}</div>
+                <div className="text-xs opacity-80" style={{ fontFamily: "var(--font-mono)" }}>{d.date}</div>
+              </button>
+            ))}
+          </div>
+
+          {day && (
+            <>
+              <p className="text-sm font-semibold mb-3">Choose a time</p>
+              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: "var(--ink-soft)", fontFamily: "var(--font-mono)" }}>Morning</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {MORNING_SLOTS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSlot(s)}
+                    className="px-3.5 py-2 rounded-xl text-sm"
+                    style={{
+                      background: slot === s ? "var(--primary)" : "var(--surface)",
+                      color: slot === s ? "#fff" : "var(--ink)",
+                      border: "1px solid var(--line)",
+                      fontFamily: "var(--font-mono)",
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: "var(--ink-soft)", fontFamily: "var(--font-mono)" }}>Evening</p>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {EVENING_SLOTS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSlot(s)}
+                    className="px-3.5 py-2 rounded-xl text-sm"
+                    style={{
+                      background: slot === s ? "var(--primary)" : "var(--surface)",
+                      color: slot === s ? "#fff" : "var(--ink)",
+                      border: "1px solid var(--line)",
+                      fontFamily: "var(--font-mono)",
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          <div className="flex items-center gap-3">
+            <button onClick={() => setStep(2)} className="text-sm font-medium flex items-center gap-1" style={{ color: "var(--primary)" }}>
+              <ChevronLeft size={14} /> Back
+            </button>
+            <button
+              disabled={!day || !slot}
+              onClick={confirmBooking}
+              className="ml-auto px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40"
+              style={{ background: "var(--accent)", color: "#2A1B05" }}
+            >
+              Confirm appointment
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* -------------------------------- LAB TEST ------------------------------- */
+
+function LabTest() {
+  const [selected, setSelected] = useState([]);
+  const [collection, setCollection] = useState("home");
+  const [day, setDay] = useState(null);
+  const [slot, setSlot] = useState(null);
+  const [confirmed, setConfirmed] = useState(false);
+  const days = nextDays(4);
+
+  function toggle(id) {
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  const chosen = LAB_TESTS.filter((t) => selected.includes(t.id));
+  const total = chosen.reduce((s, t) => s + t.price, 0);
+  const fasting = chosen.some((t) => t.fasting);
+
+  if (confirmed) {
+    const orderId = "LAB" + Math.floor(10000 + Math.random() * 89999);
+    return (
+      <div className="max-w-lg">
+        <div className="p-7 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
+          <div className="flex items-center gap-2 mb-5" style={{ color: "#2F6B45" }}>
+            <CheckCircle2 size={20} />
+            <span className="text-sm font-semibold">Lab order placed</span>
+          </div>
+          <p className="text-xs uppercase tracking-widest" style={{ color: "var(--ink-soft)", fontFamily: "var(--font-mono)" }}>Order ID</p>
+          <p className="text-2xl font-semibold mb-5" style={{ fontFamily: "var(--font-mono)", color: "var(--primary)" }}>{orderId}</p>
+          <div className="space-y-2 mb-4 pb-4" style={{ borderBottom: "1px dashed var(--line)" }}>
+            {chosen.map((t) => (
+              <div key={t.id} className="flex justify-between text-sm">
+                <span>{t.name}</span>
+                <span style={{ fontFamily: "var(--font-mono)" }}>₹{t.price}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between text-sm font-semibold mb-5">
+            <span>Total</span>
+            <span style={{ fontFamily: "var(--font-mono)" }}>₹{total}</span>
+          </div>
+          <dl className="space-y-2 text-sm mb-5">
+            <div className="flex justify-between"><dt style={{ color: "var(--ink-soft)" }}>Collection</dt><dd className="font-medium">{collection === "home" ? "Home collection" : "Walk-in"}</dd></div>
+            <div className="flex justify-between"><dt style={{ color: "var(--ink-soft)" }}>Date</dt><dd className="font-medium">{day.label}, {day.date}</dd></div>
+            <div className="flex justify-between"><dt style={{ color: "var(--ink-soft)" }}>Time</dt><dd className="font-medium">{slot}</dd></div>
+          </dl>
+          {fasting && (
+            <div className="flex gap-2 p-3 rounded-xl text-xs mb-5" style={{ background: "#FCEFE0", color: "#A2611A" }}>
+              <AlertCircle size={16} className="shrink-0" />
+              <span>One or more tests need 8–10 hours of fasting. Avoid food before your slot, water is fine.</span>
+            </div>
+          )}
+          <button
+            onClick={() => { setConfirmed(false); setSelected([]); setDay(null); setSlot(null); }}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold"
+            style={{ background: "var(--primary)", color: "#fff" }}
+          >
+            Book another test
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="lg:col-span-2">
+        <SectionHeading eyebrow="Lab orders" title="Book a lab test" sub="Select the tests you need. Prices include collection." />
+        <div className="space-y-2">
+          {LAB_TESTS.map((t) => (
+            <label
+              key={t.id}
+              className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer"
+              style={{ background: "var(--surface)", border: `1px solid ${selected.includes(t.id) ? "var(--primary)" : "var(--line)"}` }}
+            >
+              <span
+                className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
+                style={{ background: selected.includes(t.id) ? "var(--primary)" : "transparent", border: `1.5px solid ${selected.includes(t.id) ? "var(--primary)" : "var(--line)"}` }}
+                onClick={(e) => { e.preventDefault(); toggle(t.id); }}
+              >
+                {selected.includes(t.id) && <Check size={13} color="#fff" strokeWidth={3} />}
+              </span>
+              <div className="flex-1" onClick={() => toggle(t.id)}>
+                <p className="font-medium text-sm">{t.name}</p>
+                <p className="text-xs" style={{ color: "var(--ink-soft)", fontFamily: "var(--font-mono)" }}>{t.code}{t.fasting ? " · Fasting required" : ""}</p>
+              </div>
+              <span className="text-sm font-semibold" style={{ fontFamily: "var(--font-mono)" }}>₹{t.price}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div className="sticky top-4 p-5 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
+          <p className="text-xs uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)", fontFamily: "var(--font-mono)" }}>Order summary</p>
+          {chosen.length === 0 ? (
+            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>No tests selected yet.</p>
+          ) : (
+            <div className="space-y-2 mb-4 pb-4" style={{ borderBottom: "1px dashed var(--line)" }}>
+              {chosen.map((t) => (
+                <div key={t.id} className="flex justify-between text-sm">
+                  <span className="truncate pr-2">{t.name}</span>
+                  <span className="shrink-0" style={{ fontFamily: "var(--font-mono)" }}>₹{t.price}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex justify-between text-sm font-semibold mb-5">
+            <span>Total</span>
+            <span style={{ fontFamily: "var(--font-mono)" }}>₹{total}</span>
+          </div>
+
+          <p className="text-xs font-semibold mb-2">Collection method</p>
+          <div className="flex gap-2 mb-4">
+            {[{ id: "home", label: "Home collection" }, { id: "walkin", label: "Walk-in" }].map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setCollection(c.id)}
+                className="flex-1 py-2 rounded-xl text-xs font-medium"
+                style={{ background: collection === c.id ? "var(--primary)" : "transparent", color: collection === c.id ? "#fff" : "var(--ink)", border: "1px solid var(--line)" }}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          <p className="text-xs font-semibold mb-2">Date</p>
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-3">
+            {days.map((d) => (
+              <button
+                key={d.key}
+                onClick={() => setDay(d)}
+                className="shrink-0 px-3 py-2 rounded-xl text-xs text-center"
+                style={{ background: day?.key === d.key ? "var(--primary)" : "transparent", color: day?.key === d.key ? "#fff" : "var(--ink)", border: "1px solid var(--line)" }}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+
+          <p className="text-xs font-semibold mb-2">Time</p>
+          <div className="flex flex-wrap gap-2 mb-5">
+            {[...MORNING_SLOTS.slice(0, 3), ...EVENING_SLOTS.slice(0, 3)].map((s) => (
+              <button
+                key={s}
+                onClick={() => setSlot(s)}
+                className="px-2.5 py-1.5 rounded-lg text-xs"
+                style={{ background: slot === s ? "var(--primary)" : "transparent", color: slot === s ? "#fff" : "var(--ink)", border: "1px solid var(--line)", fontFamily: "var(--font-mono)" }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+
+          <button
+            disabled={chosen.length === 0 || !day || !slot}
+            onClick={() => setConfirmed(true)}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40"
+            style={{ background: "var(--accent)", color: "#2A1B05" }}
+          >
+            Place lab order
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------- CONSULT -------------------------------- */
+
+function Consult() {
+  const [active, setActive] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [typing, setTyping] = useState(false);
+  const endRef = useRef(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, typing]);
+
+  function startConsult(doc) {
+    setActive(doc);
+    setMessages([
+      { from: "doctor", text: `Hello, I'm ${doc.name}. What's bringing you in today?` },
+    ]);
+  }
+
+  function send() {
+    if (!input.trim()) return;
+    const text = input.trim();
+    setMessages((m) => [...m, { from: "patient", text }]);
+    setInput("");
+    setTyping(true);
+    setTimeout(() => {
+      setTyping(false);
+      const lower = text.toLowerCase();
+      let reply = "Thanks for sharing that. Since when have you noticed this?";
+      if (lower.includes("fever")) reply = "Noted — how high has your temperature gone, and for how many days now?";
+      else if (lower.includes("cold") || lower.includes("cough")) reply = "Understood. Any breathlessness, or is it mainly a dry cough?";
+      else if (lower.includes("pain")) reply = "Can you point to where exactly the pain is, and rate it from 1 to 10?";
+      else if (lower.includes("thank")) reply = "You're welcome. I'll send a prescription to your medicine cabinet shortly.";
+      setMessages((m) => [...m, { from: "doctor", text: reply }]);
+    }, 1400);
+  }
+
+  if (active) {
+    return (
+      <div className="max-w-xl">
+        <button onClick={() => setActive(null)} className="text-sm font-medium flex items-center gap-1 mb-5" style={{ color: "var(--primary)" }}>
+          <ChevronLeft size={14} /> End consultation
+        </button>
+        <div className="rounded-2xl overflow-hidden flex flex-col" style={{ background: "var(--surface)", border: "1px solid var(--line)", height: "30rem" }}>
+          <div className="flex items-center gap-3 p-4" style={{ borderBottom: "1px solid var(--line)" }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold" style={{ background: "var(--primary-tint)", color: "var(--primary)" }}>
+              {active.initials}
+            </div>
+            <div>
+              <p className="font-semibold text-sm" style={{ fontFamily: "var(--font-display)" }}>{active.name}</p>
+              <p className="text-xs flex items-center gap-1" style={{ color: "#2F6B45" }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#2F6B45" }} /> Online · ₹{active.fee} fee
+              </p>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.from === "patient" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className="max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm"
+                  style={{
+                    background: m.from === "patient" ? "var(--primary)" : "var(--bg)",
+                    color: m.from === "patient" ? "#fff" : "var(--ink)",
+                    borderBottomRightRadius: m.from === "patient" ? 4 : 16,
+                    borderBottomLeftRadius: m.from === "doctor" ? 4 : 16,
+                  }}
+                >
+                  {m.text}
+                </div>
+              </div>
+            ))}
+            {typing && (
+              <div className="flex justify-start">
+                <div className="px-3.5 py-2.5 rounded-2xl text-sm" style={{ background: "var(--bg)", color: "var(--ink-soft)" }}>
+                  typing…
+                </div>
+              </div>
+            )}
+            <div ref={endRef} />
+          </div>
+          <div className="p-3 flex items-center gap-2" style={{ borderTop: "1px solid var(--line)" }}>
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && send()}
+              placeholder="Describe your symptoms…"
+              className="flex-1 px-3.5 py-2.5 rounded-xl text-sm outline-none"
+              style={{ background: "var(--bg)", border: "1px solid var(--line)" }}
+            />
+            <button onClick={send} className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--primary)" }}>
+              <Send size={16} color="#fff" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <SectionHeading eyebrow="Telehealth" title="Consult online" sub="Message a doctor directly. Online doctors typically reply within a minute." />
+      <div className="space-y-3">
+        {DOCTORS.map((doc) => (
+          <div key={doc.id} className="flex items-center gap-4 p-4 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
+            <div className="relative shrink-0">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold" style={{ background: "var(--primary-tint)", color: "var(--primary)" }}>
+                {doc.initials}
+              </div>
+              <span
+                className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2"
+                style={{ background: doc.online ? "#2F6B45" : "#B7AFA4", borderColor: "var(--surface)" }}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold" style={{ fontFamily: "var(--font-display)" }}>{doc.name}</p>
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>{doc.deptName}</p>
+              <p className="text-xs mt-0.5" style={{ color: doc.online ? "#2F6B45" : "var(--ink-soft)" }}>
+                {doc.online ? "Online now" : "Offline · next online " + doc.next}
+              </p>
+            </div>
+            <button
+              disabled={!doc.online}
+              onClick={() => startConsult(doc)}
+              className="px-4 py-2 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-40"
+              style={{ background: doc.online ? "var(--accent)" : "var(--line)", color: doc.online ? "#2A1B05" : "var(--ink-soft)" }}
+            >
+              {doc.online ? "Start chat" : "Notify me"}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------- REPORTS -------------------------------- */
+
+function Reports() {
+  const [openId, setOpenId] = useState(null);
+  const [downloaded, setDownloaded] = useState({});
+  const open = REPORTS.find((r) => r.id === openId);
+
+  if (open) {
+    return (
+      <div className="max-w-2xl">
+        <button onClick={() => setOpenId(null)} className="text-sm font-medium flex items-center gap-1 mb-5" style={{ color: "var(--primary)" }}>
+          <ChevronLeft size={14} /> All reports
+        </button>
+        <div className="p-7 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h3 className="text-xl font-semibold" style={{ fontFamily: "var(--font-display)" }}>{open.test}</h3>
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Collected {open.date} · Arogya Family Clinic Lab</p>
+            </div>
+            <StatusPill status={open.status} />
+          </div>
+
+          <div className="grid grid-cols-4 gap-2 text-xs uppercase tracking-wide pb-2 mb-1" style={{ color: "var(--ink-soft)", fontFamily: "var(--font-mono)", borderBottom: "1px solid var(--line)" }}>
+            <span>Parameter</span><span>Result</span><span>Range</span><span>Flag</span>
+          </div>
+          {open.params.map((p) => (
+            <div key={p.name} className="grid grid-cols-4 gap-2 py-2.5 text-sm" style={{ borderBottom: "1px solid var(--line)" }}>
+              <span>{p.name}</span>
+              <span style={{ fontFamily: "var(--font-mono)" }}>{p.result} {p.unit}</span>
+              <span style={{ color: "var(--ink-soft)", fontFamily: "var(--font-mono)" }}>{p.range}</span>
+              <FlagBadge flag={p.flag} />
+            </div>
+          ))}
+
+          <button
+            onClick={() => setDownloaded((d) => ({ ...d, [open.id]: true }))}
+            className="mt-6 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold"
+            style={{ background: downloaded[open.id] ? "#E8F2EA" : "var(--primary)", color: downloaded[open.id] ? "#2F6B45" : "#fff" }}
+          >
+            {downloaded[open.id] ? <><Check size={16} /> Downloaded</> : <><Download size={16} /> Download PDF</>}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <SectionHeading eyebrow="Lab & consult history" title="My reports" sub="Reports appear here as soon as the lab finishes processing." />
+      <div className="space-y-2">
+        {REPORTS.map((r) => (
+          <button
+            key={r.id}
+            onClick={() => r.status === "ready" && setOpenId(r.id)}
+            disabled={r.status !== "ready"}
+            className="w-full flex items-center gap-4 p-4 rounded-2xl text-left disabled:cursor-default"
+            style={{ background: "var(--surface)", border: "1px solid var(--line)" }}
+          >
+            <FileText size={18} style={{ color: "var(--ink-soft)" }} className="shrink-0" />
+            <div className="flex-1">
+              <p className="font-medium text-sm">{r.test}</p>
+              <p className="text-xs" style={{ color: "var(--ink-soft)", fontFamily: "var(--font-mono)" }}>{r.date}</p>
+            </div>
+            <StatusPill status={r.status} />
+            {r.status === "ready" && <ChevronRight size={16} style={{ color: "var(--ink-soft)" }} />}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------- MEDICINE -------------------------------- */
+
+function Medicine() {
+  const [query, setQuery] = useState("");
+  const filtered = MEDICINES.filter((m) => m.name.toLowerCase().includes(query.toLowerCase()));
+
+  return (
+    <div>
+      <SectionHeading eyebrow="In-house pharmacy" title="Check medicine availability" sub="Search before your visit so you don't make a wasted trip." />
+      <div className="relative mb-6 max-w-md">
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-soft)" }} />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by medicine name…"
+          className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none"
+          style={{ background: "var(--surface)", border: "1px solid var(--line)" }}
+        />
+      </div>
+
+      <div className="space-y-2">
+        {filtered.length === 0 && (
+          <p className="text-sm" style={{ color: "var(--ink-soft)" }}>No medicine matches "{query}". Try a generic name instead of a brand.</p>
+        )}
+        {filtered.map((m) => (
+          <div key={m.id} className="flex items-center gap-4 p-4 rounded-2xl" style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--primary-tint)" }}>
+              <Pill size={16} style={{ color: "var(--primary)" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm">{m.name}</p>
+              <p className="text-xs" style={{ color: "var(--ink-soft)" }}>{m.form}</p>
+              {m.stock === "out" && m.sub && (
+                <p className="text-xs mt-1" style={{ color: "var(--accent-dark)" }}>Try substitute: {m.sub}</p>
+              )}
+            </div>
+            <span className="text-sm font-semibold shrink-0" style={{ fontFamily: "var(--font-mono)" }}>₹{m.price}</span>
+            <div className="shrink-0"><StockBadge stock={m.stock} /></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* --------------------------------- SHELL --------------------------------- */
+
+export default function ClinicPortal() {
+  const [active, setActive] = useState("home");
+  const [navOpen, setNavOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen w-full" style={{ background: "var(--bg)", color: "var(--ink)", fontFamily: "var(--font-body)" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+        :root {
+          --bg: #F3F6F4;
+          --surface: #FFFFFF;
+          --ink: #16231F;
+          --ink-soft: #5E6B64;
+          --primary: #0E5C53;
+          --primary-dark: #0A433C;
+          --primary-tint: #E3EEEB;
+          --accent: #E08A3E;
+          --accent-dark: #A2611A;
+          --line: #DEE5E1;
+          --font-display: 'Fraunces', serif;
+          --font-body: 'IBM Plex Sans', sans-serif;
+          --font-mono: 'IBM Plex Mono', monospace;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          * { transition: none !important; animation: none !important; }
+        }
+      `}</style>
+
+      {/* Top bar */}
+      <header className="flex items-center justify-between px-5 md:px-10 py-4" style={{ borderBottom: "1px solid var(--line)" }}>
+        <div className="flex items-center gap-3">
+          <button className="md:hidden" onClick={() => setNavOpen((v) => !v)} aria-label="Toggle menu">
+            {navOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "var(--primary)" }}>
+              <Stethoscope size={18} color="#fff" strokeWidth={1.75} />
+            </div>
+            <div>
+              <p className="leading-none text-lg" style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}>Arogya</p>
+              <p className="text-[11px] leading-none mt-0.5" style={{ color: "var(--ink-soft)" }}>Family Clinic, Chennai</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: "var(--accent)", color: "#2A1B05" }}>
+            DP
+          </div>
+          <span className="hidden sm:inline text-sm font-medium">Demo Patient</span>
+        </div>
+      </header>
+
+      <TokenBoard />
+
+      <div className="flex">
+        {/* Sidebar */}
+        <nav
+          className={`${navOpen ? "flex" : "hidden"} md:flex flex-col w-full md:w-60 shrink-0 px-4 md:px-4 py-5 gap-1`}
+          style={{ borderRight: "1px solid var(--line)", background: "var(--surface)" }}
+        >
+          {NAV.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => { setActive(item.id); setNavOpen(false); }}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-left"
+              style={{
+                background: active === item.id ? "var(--primary-tint)" : "transparent",
+                color: active === item.id ? "var(--primary-dark)" : "var(--ink-soft)",
+              }}
+            >
+              <item.icon size={17} strokeWidth={1.75} />
+              {item.label}
+            </button>
+          ))}
+          <div className="mt-auto pt-5 hidden md:block">
+            <div className="p-3.5 rounded-xl text-xs" style={{ background: "var(--bg)", color: "var(--ink-soft)" }}>
+              <p className="font-semibold mb-1" style={{ color: "var(--ink)" }}>Need urgent help?</p>
+              Call the front desk at <span style={{ fontFamily: "var(--font-mono)" }}>+91 44 4XXX XXXX</span>
+            </div>
+          </div>
+        </nav>
+
+        {/* Main */}
+        <main className="flex-1 px-5 md:px-10 py-8 max-w-5xl">
+          {active === "home" && <Home go={setActive} />}
+          {active === "appointment" && <Appointment />}
+          {active === "lab" && <LabTest />}
+          {active === "consult" && <Consult />}
+          {active === "reports" && <Reports />}
+          {active === "medicine" && <Medicine />}
+        </main>
+      </div>
+    </div>
+  );
+}
